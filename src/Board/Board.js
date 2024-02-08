@@ -45,7 +45,7 @@ class Board extends React.Component {
       let row = 0;
       let col = Math.floor((this.props.width - 1) / 2);
       for(let i = 0; i < this.state.current_falling_group.length; i++) {
-        if(board[row][col].color != Empty) {
+        if(board[row][col].props.color != Empty) {
           return false;
         }
 
@@ -76,27 +76,86 @@ class Board extends React.Component {
         }
       }
 
-      console.log(current_falling_group)
       this.setState({
         board: board,
         current_falling_group: current_falling_group
       })
+      return true;
     }
 
     move_falling_group_left = () => {
+      /**
+       * If there is space for the falling group leftwards, move the falling group left.
+       * 
+       * @Notes
+       * The method scans the falling jellies from first to last in the list, because falling jellies
+       * are listed in order from left to right.
+       */
 
+      console.log("move left")
+      let falling_group = this.state.current_falling_group
+      let board = this.state.board
+
+      let is_space_to_move = true
+      for(let i = 0; i < falling_group.length; i++) {
+
+        // if there is either a blank space or a falling jelly to the left, there is space for this jelly
+        if(falling_group[i].props.col == 0 || 
+          (board[falling_group[i].props.row][falling_group[i].props.col - 1].props.color != Empty &&
+           !board[falling_group[i].props.row][falling_group[i].props.col - 1].props.falling)) {
+          is_space_to_move = false
+          break
+        }
+      }
+
+      if(is_space_to_move) {
+        for(let i = 0; i < falling_group.length; i++) {
+          board[falling_group[i].props.row][falling_group[i].props.col] = (
+            <Jelly
+              color={Empty} 
+              falling={false}
+              row={falling_group[i].props.row}
+              col={falling_group[i].props.col}
+              key={[falling_group[i].props.row, falling_group[i].props.col]}
+            ></Jelly>
+          )
+          board[falling_group[i].props.row][falling_group[i].props.col - 1] = (
+            <Jelly
+              color={falling_group[i].props.color} 
+              falling={true}
+              row={falling_group[i].props.row}
+              col={falling_group[i].props.col}
+              key={[falling_group[i].props.row, falling_group[i].props.col]}
+            ></Jelly>
+          )
+          falling_group[i] = (
+            <Jelly
+              color={falling_group[i].props.color} 
+              falling={true}
+              row={falling_group[i].props.row}
+              col={falling_group[i].props.col - 1}
+              key={[falling_group[i].props.row, falling_group[i].props.col - 1]}
+            ></Jelly>
+          )
+        }
+      }
+
+      this.setState({
+        current_falling_group: falling_group,
+        board: board
+      })
     }
 
     move_falling_group_right = () => {
-      
+      console.log("move right")
     }
 
     rotate_falling_group_left = () => {
-      
+      console.log("rotate left")
     }
 
     rotate_falling_group_right = () => {
-      
+      console.log("rotate right")
     }
 
     move_falling_group_down() {
@@ -111,10 +170,11 @@ class Board extends React.Component {
       // if there is ground or a non-falling jelly below any of the jellies, it can't move down
       let can_move_down = true
       for(let i = current_falling_group.length - 1; i >= 0; i--) {
-        if(current_falling_group[i].props.row == this.state.height - 1 || 
+        if(current_falling_group[i].props.row == this.props.height - 1 ||
           (!board[current_falling_group[i].props.row + 1][current_falling_group[i].props.col].props.falling &&
             board[current_falling_group[i].props.row + 1][current_falling_group[i].props.col].props.color != Empty)) {
           can_move_down = false
+          break
         }
       }
 
@@ -171,18 +231,36 @@ class Board extends React.Component {
        */
 
       let current_falling_group = this.state.current_falling_group
+      let board = this.state.board
 
       // place the current falling group
       for(let i = 0; i < this.state.current_falling_group.length; i++) {
-        current_falling_group[i].falling = false
+        board[current_falling_group[i].props.row][current_falling_group[i].props.col] = (
+          <Jelly
+            color={current_falling_group[i].props.color}
+            falling={false}
+            row={current_falling_group[i].props.row}
+            col={current_falling_group[i].props.col}
+            key={[current_falling_group[i].props.row, current_falling_group[i].props.col]}
+          />
+        );
       }
 
       // set the current falling group equal to the next, get a new next, and add the next to the board
       this.setState({
+        board: board,
         current_falling_group: this.state.next_falling_group,
         next_falling_group: this.get_random_jelly_falling_group()
       })
       return this.add_falling_group_to_board()
+    }
+
+    pop_jellies = () => {
+
+    }
+
+    apply_gravity = () => {
+      
     }
 
     get_random_jelly_falling_group = () => {
@@ -192,13 +270,15 @@ class Board extends React.Component {
        */
 
       let falling_group = []
-      for(let i = 0; i < this.props.possible_sizes[Math.floor(Math.random(this.props.possible_sizes.length))]; i++) {
+      console.log(Math.random() * this.props.num_colors)
+      for(let i = 0; i < this.props.possible_sizes[Math.floor(Math.random() * this.props.possible_sizes.length)]; i++) {
         falling_group.push(
           <Jelly
-            color={this.state.colors[Math.floor(Math.random(this.props.num_colors))]} 
+            color={this.state.colors[Math.floor(Math.random() * this.props.num_colors)]} 
             falling={true}
             row={i % 2}
             col={Math.floor(i / 2)}
+            key={[i % 2, Math.floor(i / 2)]}
           ></Jelly>
         );
       }
@@ -216,6 +296,7 @@ class Board extends React.Component {
               falling={false}
               row={i}
               col={j}
+              key={[i, j]}
             ></Jelly>
           );
         }
