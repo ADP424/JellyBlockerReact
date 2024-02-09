@@ -631,7 +631,92 @@ class Board extends React.Component {
     }
 
     pop_jellies = () => {
+      /**
+       * Iterate through the board to find jellies needing popping and return the number of jellies popped.
+       * @return {int} The total number of jellies popped.
+       */
 
+      let num_jellies_popped = 0
+      let board = this.state.board
+
+      // explore every path from each jelly using pseudo-BFS
+      let total_visited_jellies = new Map()
+      for(let row = 0; row < this.props.height; row++) {
+        for(let col = 0; col < this.props.width; col++) {
+
+          // if the jelly is empty, garbage, falling, or already visited, continue
+          if(board[row][col].props.color == Empty || board[row][col].props.color == Garbage ||
+             board[row][col].props.falling || this.getMapValue(total_visited_jellies, board[row][col], false)) {
+            continue
+          }
+
+          let jelly_queue = [board[row][col]]
+          let visited_jellies = [board[row][col]]
+          total_visited_jellies.set(board[row][col], true)
+
+          while(jelly_queue.length > 0) {
+            let adj_jelly = jelly_queue.shift()
+
+            // add all adjacent, same-colored, unvisited jellies to the list to visit
+            if(adj_jelly.props.row > 0 &&
+               board[adj_jelly.props.row - 1][adj_jelly.props.col].props.color != Empty &&
+               board[adj_jelly.props.row - 1][adj_jelly.props.col].props.color != Garbage &&
+               !this.getMapValue(total_visited_jellies, board[adj_jelly.props.row - 1][adj_jelly.props.col], false) &&
+               adj_jelly.props.color == board[adj_jelly.props.row - 1][adj_jelly.props.col].props.color) {
+              jelly_queue.push(board[adj_jelly.props.row - 1][adj_jelly.props.col])
+              visited_jellies.push(board[adj_jelly.props.row - 1][adj_jelly.props.col])
+              total_visited_jellies.set(board[adj_jelly.props.row - 1][adj_jelly.props.col], true)
+            }
+
+            if(adj_jelly.props.row < this.props.height - 1 &&
+               board[adj_jelly.props.row + 1][adj_jelly.props.col].props.color != Empty &&
+               board[adj_jelly.props.row + 1][adj_jelly.props.col].props.color != Garbage &&
+               !this.getMapValue(total_visited_jellies, board[adj_jelly.props.row + 1][adj_jelly.props.col], false) &&
+               adj_jelly.props.color == board[adj_jelly.props.row + 1][adj_jelly.props.col].props.color) {
+              jelly_queue.push(board[adj_jelly.props.row + 1][adj_jelly.props.col])
+              visited_jellies.push(board[adj_jelly.props.row + 1][adj_jelly.props.col])
+              total_visited_jellies.set(board[adj_jelly.props.row + 1][adj_jelly.props.col], true)
+            }
+
+            if(adj_jelly.props.col > 0 &&
+               board[adj_jelly.props.row][adj_jelly.props.col - 1].props.color != Empty &&
+               board[adj_jelly.props.row][adj_jelly.props.col - 1].props.color != Garbage &&
+               !this.getMapValue(total_visited_jellies, board[adj_jelly.props.row][adj_jelly.props.col - 1], false) &&
+               adj_jelly.props.color == board[adj_jelly.props.row][adj_jelly.props.col - 1].props.color) {
+              jelly_queue.push(board[adj_jelly.props.row][adj_jelly.props.col - 1])
+              visited_jellies.push(board[adj_jelly.props.row][adj_jelly.props.col - 1])
+              total_visited_jellies.set(board[adj_jelly.props.row][adj_jelly.props.col - 1], true)
+            }
+
+            if(adj_jelly.props.col < this.props.width - 1 &&
+               board[adj_jelly.props.row][adj_jelly.props.col + 1].props.color != Empty &&
+               board[adj_jelly.props.row][adj_jelly.props.col + 1].props.color != Garbage &&
+               !this.getMapValue(total_visited_jellies, board[adj_jelly.props.row][adj_jelly.props.col + 1], false) &&
+               adj_jelly.props.color == board[adj_jelly.props.row][adj_jelly.props.col + 1].props.color) {
+              jelly_queue.push(board[adj_jelly.props.row][adj_jelly.props.col + 1])
+              visited_jellies.push(board[adj_jelly.props.row][adj_jelly.props.col + 1])
+              total_visited_jellies.set(board[adj_jelly.props.row][adj_jelly.props.col + 1], true)
+            }
+          }
+
+          // if the number of connected jellies is enough to pop, pop them
+          if(visited_jellies.length >= this.props.num_connecting_jellies_to_pop) {
+            num_jellies_popped += visited_jellies.length
+            for(let i = 0; i < visited_jellies.length; i++) {
+              board[visited_jellies[i].props.row][visited_jellies[i].props.col] = 
+                <Jelly
+                  color={Empty} 
+                  falling={false}
+                  row={visited_jellies[i].props.row}
+                  col={visited_jellies[i].props.col}
+                  key={[visited_jellies[i].props.row, visited_jellies[i].props.col]}
+                ></Jelly>
+            }
+          }
+        }
+      }
+
+      return num_jellies_popped
     }
 
     apply_gravity = () => {
@@ -686,6 +771,17 @@ class Board extends React.Component {
     componentDidMount = () => {
       this.initialize_board();
       document.documentElement.style.setProperty('--numColumns', this.props.width)
+    }
+
+    getMapValue = (map, key, def) => {
+      /**
+       * Utility function for returning a value from a map while specifying a default value.
+       * @param {Map} map the map to return the value from
+       * @param {any} key the key to find in the map
+       * @param {any} def the default value to return if the value at key is undefined in map
+       * @returns {any} the value at the key in the map, or the provided default value if it is undefined
+       */
+      return map.get(key) || def;
     }
 
     render = () => {

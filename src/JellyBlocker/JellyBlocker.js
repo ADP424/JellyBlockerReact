@@ -13,6 +13,7 @@ class JellyBlocker extends React.Component {
       height: 13,
       num_colors: 5,
       possible_sizes: [2],
+      num_connecting_jellies_to_pop: 4,
 
       game_running: false,
       falling_group_interval: null,
@@ -34,6 +35,7 @@ class JellyBlocker extends React.Component {
     let can_move_down = this.board.current.move_falling_group_down()
     if(!can_move_down) {
       let space_to_add = this.board.current.cycle_falling_groups()
+      console.log(this.board.current.pop_jellies())
       if(!space_to_add) {
         this.setState({
           game_running: false
@@ -95,6 +97,7 @@ class JellyBlocker extends React.Component {
         height={this.state.height}
         num_colors={this.state.num_colors}
         possible_sizes={this.state.possible_sizes}
+        num_connecting_jellies_to_pop={this.state.num_connecting_jellies_to_pop}
         game_running={this.state.game_running}
 
         start_button=
