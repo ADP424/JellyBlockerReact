@@ -1,5 +1,21 @@
 .board {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    grid-template-columns: repeat(var(--numColumns), 50px);
     grid-gap: 0;
-  }
+    flex-wrap: wrap;
+    margin: 0; /* Reset margin */
+    padding: 0; /* Reset padding */
+    justify-content: center;
+    background-color: black;
+}
+
+h1 {
+  color: black;
+  -webkit-text-fill-color: white;
+  -webkit-text-stroke: 2px black;
+}
+
+.board-outline {
+  border: 25px solid black;
+  padding: 0px;
+}

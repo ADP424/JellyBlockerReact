@@ -89,16 +89,21 @@ class JellyBlocker extends React.Component {
 
   render() {
     return <div className="JellyBlocker">
-      {!this.state.game_running && (
-      <Button color="success" onClick={this.run_game}>
-        {'Start'}
-      </Button>
-      )}
+      
       <Board
         width={this.state.width}
         height={this.state.height}
         num_colors={this.state.num_colors}
         possible_sizes={this.state.possible_sizes}
+        game_running={this.state.game_running}
+
+        start_button=
+        {!this.state.game_running && (
+          <Button color="success" onClick={this.run_game} size="lg">
+            {'Start'}
+          </Button>
+        )}
+
         ref={this.board}
       ></Board>
     </div>
