@@ -542,7 +542,7 @@ class Board extends React.Component {
       if (can_move_down) {
         for (let i = current_falling_group.length - 1; i >= 0; i--) {
 
-          // set the place below the jelly equal to the jelly
+          // set the place below the jelly to the jelly
           board[current_falling_group[i].props.row + 1][current_falling_group[i].props.col] = (
             <Jelly
               color={current_falling_group[i].props.color}
@@ -553,7 +553,7 @@ class Board extends React.Component {
             />
           );
 
-          // set the place where the jelly was equal to an empty jelly
+          // set the place where the jelly was to an empty jelly
           board[current_falling_group[i].props.row][current_falling_group[i].props.col] = (
             <Jelly
               color={Empty}
@@ -720,7 +720,51 @@ class Board extends React.Component {
     }
 
     apply_gravity = () => {
-      
+      /**
+       * Iterate through the board and move every jelly in the air down by one.
+       * @return {boolean} Whether any jellies were actually moved downward.
+       */
+
+      let board = this.state.board
+      let board_changed = false
+      for(let row = this.props.height - 1; row > 0; row--) {
+        for(let col = 0; col < this.props.width; col++) {
+          
+          // if the jelly isn't falling and isn't on top of another jelly, move it down one
+          if(board[row][col].props.color != Empty && !board[row][col].props.falling &&
+             row < this.props.height - 1 && board[row + 1][col].props.color == Empty) {
+            
+            // set the place below the jelly to the jelly
+            board[row + 1][col] = (
+              <Jelly
+                color={board[row][col].props.color}
+                falling={false}
+                row={row + 1}
+                col={col}
+                key={[row + 1, col]}
+              />
+            );
+
+            // set the place where the jelly was to an empty jelly
+            board[row][col] = (
+              <Jelly
+                color={Empty}
+                falling={false}
+                row={row}
+                col={col}
+                key={[row, col]}
+              />
+            );
+            board_changed = true
+          }
+        }
+      }
+
+      this.setState({
+        board: board
+      })
+
+      return board_changed;
     }
 
     get_random_jelly_falling_group = () => {
@@ -742,6 +786,24 @@ class Board extends React.Component {
         );
       }
       return falling_group
+    }
+
+    get_current_falling_group_row = () => {
+      /**
+       * Returns the row of the first jelly in the current falling group.
+       * @return {int} the row of the first jelly in the current falling group.
+       */
+
+      return this.state.current_falling_group[0].props.row
+    }
+
+    get_current_falling_group_col = () => {
+      /**
+       * Returns the column of the first jelly in the current falling group.
+       * @return {int} the column of the first jelly in the current falling group.
+       */
+
+      return this.state.current_falling_group[0].props.col
     }
 
     initialize_board = () => {
@@ -779,7 +841,7 @@ class Board extends React.Component {
        * @param {Map} map the map to return the value from
        * @param {any} key the key to find in the map
        * @param {any} def the default value to return if the value at key is undefined in map
-       * @returns {any} the value at the key in the map, or the provided default value if it is undefined
+       * @return {any} the value at the key in the map, or the provided default value if it is undefined
        */
       return map.get(key) || def;
     }
