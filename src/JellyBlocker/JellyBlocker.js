@@ -15,20 +15,23 @@ class JellyBlocker extends React.Component {
       possible_sizes: [2],
       num_connecting_jellies_to_pop: 4,
 
+      jellies_popped_stat: 0,
       game_running: false,
       game_paused: false, // set during gravity (and maybe by the user idk, I haven't decided yet)
       falling_group_speed: 1000, // the time in between each drop of the falling group in milliseconds
       gravity_speed: 200, // the time in between each application of gravity in milliseconds
       points: 0,
       popped_jelly_stat: 0,
-      current_level: 1,
-      num_pops_to_level: 50, // how many jellies need to be popped to increase current_level
+      level: 1,
+      num_pops_to_level: 20, // how many jellies need to be popped to increase current_level
       fast_drop: false,
       fast_drop_multiplier: 5, // how much the speed should be multiplied when fast drop is activated
       key_pressed: "",
 
       // all of these are used exclusively by run_game() and run_game_helper()
+      time: 0,
       falling_group_interval: null, // the interval to schedule run_game_helper() by run_game()
+      timer_interval: null, // the interval to schedule increasing time
       count_iterations_without_change: 0,
       num_landed_iterations_before_placement: 5, // how many intervals a falling group can stay on the ground before being placed
       count_iterations_without_moving_down: 0,
@@ -46,6 +49,8 @@ class JellyBlocker extends React.Component {
     this.board.current.add_falling_group_to_board()
     this.setState({
       game_running: true,
+      time: 0,
+      timer_interval: setInterval(() => {this.setState({time: this.state.time += 100})}, 100),
       falling_group_interval: setInterval(this.run_game_helper, this.state.falling_group_speed)
     });
   }
@@ -101,13 +106,12 @@ class JellyBlocker extends React.Component {
       }
 
       let total_jellies_popped = 0
-      let popping_chain = -1
+      let popping_chain = -2
 
       // apply gravity until all jellies are on the ground
       this.setState({
         game_paused: true
       })
-      let board_changed = true
       
       let gravity_interval = setInterval(() => {
 
@@ -120,7 +124,7 @@ class JellyBlocker extends React.Component {
           this.setState({
             jellies_popped_stat: this.state.jellies_popped_stat + num_jellies_popped
           })
-          popping_chain += 2
+          popping_chain += 3
 
           if(num_jellies_popped == 0) {
 
@@ -133,9 +137,12 @@ class JellyBlocker extends React.Component {
           num_jellies_popped = 0
 
           // if enough jellies have been popped to level up, level up
+          console.log(this.state.jellies_popped_stat)
           if(this.state.jellies_popped_stat >= this.state.num_pops_to_level * this.state.current_level) {
+            clearInterval(this.state.falling_group_interval)
             this.setState({
-              current_level: this.state.current_level + 1
+              current_level: this.state.current_level + 1,
+              falling_group_interval: setInterval(this.run_game_helper, this.state.falling_group_speed / this.state.level)
             })
           }
       
@@ -162,14 +169,18 @@ class JellyBlocker extends React.Component {
     switch(event.keyCode) {
       case 40: // down arrow
         if(this.state.fast_drop) {
-          clearInterval(this.state.falling_group_interval)
-          this.setState({
-            falling_group_interval: setInterval(this.run_game_helper, this.state.falling_group_speed)
-          })
+          if(this.state.fast_drop) {
+
+            clearInterval(this.state.falling_group_interval)
+            this.setState({
+              falling_group_interval: setInterval(this.run_game_helper, this.state.falling_group_speed / this.state.level)
+            })
+
+            this.setState({
+              fast_drop: false
+            })
+          }
         }
-        this.setState({
-          fast_drop: false
-        })
         break
       default:
         break;
@@ -187,14 +198,18 @@ class JellyBlocker extends React.Component {
           break
         case 40: // down arrow
           if(!this.state.fast_drop) {
-            clearInterval(this.state.falling_group_interval)
-            this.setState({
-              falling_group_interval: setInterval(this.run_game_helper, Math.floor(this.state.falling_group_speed / this.state.fast_drop_multiplier))
-            })
+            if(this.state.time % this.state.falling_group_speed == 0) {
+
+              clearInterval(this.state.falling_group_interval)
+              this.setState({
+                falling_group_interval: setInterval(this.run_game_helper, this.state.falling_group_speed / this.state.level / this.state.fast_drop_multiplier)
+              })
+
+              this.setState({
+                fast_drop: true
+              })
+            }
           }
-          this.setState({
-            fast_drop: true
-          })
           break
         case 90: // 'z' key
           this.board.current.rotate_falling_group_left()
@@ -227,6 +242,9 @@ class JellyBlocker extends React.Component {
         num_colors={this.state.num_colors}
         possible_sizes={this.state.possible_sizes}
         num_connecting_jellies_to_pop={this.state.num_connecting_jellies_to_pop}
+        points={this.state.points}
+        level={this.state.level}
+        time = {this.state.time}
         game_running={this.state.game_running}
 
         start_button=

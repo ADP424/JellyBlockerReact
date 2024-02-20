@@ -872,6 +872,11 @@ class Board extends React.Component {
               )}
 
               <br></br>
+              <h1>Points: {this.props.points}</h1>
+              <h1>Level: {this.props.level}</h1>
+              <h1>Time: {Math.floor(this.props.time / 1000)}:{(this.props.time % 1000).toString().charAt(0) + '0'}</h1>
+
+              <br></br>
               <div>
                 {this.props.start_button}
               </div>
